@@ -17,6 +17,7 @@ function App() {
   return (
     <React.Fragment>
       <Logo />
+      <h1>Bookshelf</h1>
       <div>
         <button onClick={handleLoginClick}>Log in</button>
         <button onClick={handleRegisterClick}>Register</button>
