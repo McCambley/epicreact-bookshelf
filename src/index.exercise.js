@@ -7,42 +7,29 @@ import {Logo} from './components/logo'
 import {Dialog} from '@reach/dialog'
 import '@reach/dialog/styles.css'
 
-function LoginForm({buttonText}) {
-  const [formData, setFormData] = useState({username: '', password: ''})
-
-  function handleSubmit() {
-    console.log(buttonText, formData)
-  }
-
-  const handleChange = property => e => {
-    return setFormData(previous => ({...previous, [property]: e.target.value}))
+function LoginForm({buttonText, onSubmit}) {
+  function handleSubmit(e) {
+    e.preventDefault()
+    const {username, password} = e.target.elements
+    onSubmit({
+      username: username.value,
+      password: password.value,
+    })
   }
 
   return (
-    <>
+    <form onSubmit={handleSubmit}>
       <h2>{buttonText}</h2>
       <div>
-        <label htmlFor="login_username">Username: </label>
-        <input
-          type="text"
-          id="login_username"
-          name="username"
-          value={formData.username}
-          onChange={handleChange('username')}
-        />
+        <label htmlFor="username">Username: </label>
+        <input type="text" id="username" name="username" />
       </div>
       <div>
-        <label htmlFor="login_password">Password: </label>
-        <input
-          type="password"
-          id="login_password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange('password')}
-        />
+        <label htmlFor="password">Password: </label>
+        <input type="password" id="password" name="password" />
       </div>
-      <button onClick={handleSubmit}>{buttonText}</button>
-    </>
+      <button type="submit">{buttonText}</button>
+    </form>
   )
 }
 
@@ -57,6 +44,15 @@ function App() {
   function closeModal() {
     setOpenModal('none')
   }
+
+  function login(formData) {
+    console.log('login', formData)
+  }
+
+  function register(formData) {
+    console.log('register', formData)
+  }
+
   return (
     <>
       <Logo width={80} height={80} />
@@ -70,10 +66,10 @@ function App() {
         </div>
       </div>
       <Dialog isOpen={openModal === 'login'} onDismiss={closeModal}>
-        <LoginForm buttonText={'Login'} />
+        <LoginForm buttonText={'Login'} onSubmit={login} />
       </Dialog>
       <Dialog isOpen={openModal === 'register'} onDismiss={closeModal}>
-        <LoginForm buttonText={'Register'} />
+        <LoginForm buttonText={'Register'} onSubmit={register} />
       </Dialog>
     </>
   )
