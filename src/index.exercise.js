@@ -7,8 +7,45 @@ import {Logo} from './components/logo'
 import {Dialog} from '@reach/dialog'
 import '@reach/dialog/styles.css'
 
-// 🐨 create an App component here and render the logo, the title ("Bookshelf"), a login button, and a register button.
-// 🐨 for fun, you can add event handlers for both buttons to alert that the button was clicked
+function LoginForm({buttonText}) {
+  const [formData, setFormData] = useState({username: '', password: ''})
+
+  function handleSubmit() {
+    console.log(buttonText, formData)
+  }
+
+  const handleChange = property => e => {
+    return setFormData(previous => ({...previous, [property]: e.target.value}))
+  }
+
+  return (
+    <>
+      <h2>{buttonText}</h2>
+      <div>
+        <label htmlFor="login_username">Username: </label>
+        <input
+          type="text"
+          id="login_username"
+          name="username"
+          value={formData.username}
+          onChange={handleChange('username')}
+        />
+      </div>
+      <div>
+        <label htmlFor="login_password">Password: </label>
+        <input
+          type="password"
+          id="login_password"
+          name="password"
+          value={formData.password}
+          onChange={handleChange('password')}
+        />
+      </div>
+      <button onClick={handleSubmit}>{buttonText}</button>
+    </>
+  )
+}
+
 function App() {
   const [openModal, setOpenModal] = useState('none')
   function handleLoginClick() {
@@ -33,26 +70,10 @@ function App() {
         </div>
       </div>
       <Dialog isOpen={openModal === 'login'} onDismiss={closeModal}>
-        <h2>Login</h2>
-        <div>
-          <label for="login_username">Username: </label>
-          <input type="text" id="login_username" name="username" />
-        </div>
-        <div>
-          <label for="login_password">Password: </label>
-          <input type="password" id="login_password" name="password" />
-        </div>
+        <LoginForm buttonText={'Login'} />
       </Dialog>
       <Dialog isOpen={openModal === 'register'} onDismiss={closeModal}>
-        <h2>Register</h2>
-        <div>
-          <label for="register_username">Username: </label>
-          <input type="text" id="register_username" name="username" />
-        </div>
-        <div>
-          <label for="register_password">Password: </label>
-          <input type="password" id="register_password" name="password" />
-        </div>
+        <LoginForm buttonText={'Register'} />
       </Dialog>
     </>
   )
