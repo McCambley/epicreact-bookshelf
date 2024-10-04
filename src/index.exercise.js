@@ -1,14 +1,13 @@
 /** @jsx jsx */
 import {jsx} from '@emotion/core'
-import * as React from 'react'
 
 import 'bootstrap/dist/css/bootstrap-reboot.css'
-
 import '@reach/dialog/styles.css'
+import * as React from 'react'
 import {createRoot} from 'react-dom/client'
+import {Button, Input, FormGroup} from './components/lib'
 import {Modal, ModalContents, ModalOpenButton} from './components/modal'
 import {Logo} from './components/logo'
-import {FormGroup, Input, Button} from 'components/lib'
 
 function LoginForm({onSubmit, submitButton}) {
   function handleSubmit(event) {
@@ -23,7 +22,6 @@ function LoginForm({onSubmit, submitButton}) {
 
   return (
     <form
-      onSubmit={handleSubmit}
       css={{
         display: 'flex',
         flexDirection: 'column',
@@ -34,6 +32,7 @@ function LoginForm({onSubmit, submitButton}) {
           maxWidth: '300px',
         },
       }}
+      onSubmit={handleSubmit}
     >
       <FormGroup>
         <label htmlFor="username">Username</label>
