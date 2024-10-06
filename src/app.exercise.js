@@ -6,6 +6,9 @@ import * as auth from 'auth-provider'
 import {AuthenticatedApp} from './authenticated-app'
 import {UnauthenticatedApp} from './unauthenticated-app'
 import {client} from './utils/api-client'
+import {useAsync} from 'utils/hooks'
+import * as colors from './styles/colors'
+import {FullPageSpinner} from 'components/lib'
 
 async function getUser() {
   let user = null
@@ -18,24 +21,50 @@ async function getUser() {
 }
 
 function App() {
-  const [user, setUser] = useState(null)
+  const {
+    data: user,
+    error,
+    isIdle,
+    isLoading,
+    isSuccess,
+    isError,
+    run,
+    setData,
+  } = useAsync()
 
   useEffect(() => {
-    getUser().then(u => setUser(u))
-  }, [])
+    run(getUser())
+  }, [run])
 
   async function login(form) {
-    const u = await auth.login(form)
-    setUser(u)
+    await run(auth.login(form))
   }
   async function register(form) {
-    const u = await auth.register(form)
-    setUser(u)
+    await run(auth.register(form))
   }
 
   async function logout() {
-    await auth.logout()
-    setUser(null)
+    run(auth.logout())
+  }
+
+  if (isLoading || isIdle) {
+    return <FullPageSpinner />
+  }
+
+  if (isError) {
+    ;<div
+      css={{
+        color: colors.danger,
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
+      <p>Uh oh... There's a problem. Try refreshing the app.</p>
+      <pre>{error.message}</pre>
+    </div>
   }
 
   return user ? (
