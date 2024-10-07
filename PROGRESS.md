@@ -12,8 +12,8 @@ Jake's Progress
   - Date completed: October 4th, 2024
 - [x] Authentication
   - Date completed: October 5th, 2024
-- [ ] Routing
-  - Date completed:
+- [x] Routing
+  - Date completed: October 7th, 2024
 - [ ] Cache Management
   - Date completed:
 - [ ] Context
