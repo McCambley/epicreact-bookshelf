@@ -17,6 +17,7 @@ import {Textarea} from 'components/lib'
 import {Rating} from 'components/rating'
 import {StatusButtons} from 'components/status-buttons'
 import bookPlaceholderSvg from 'assets/book-placeholder.svg'
+import {useQuery, useMutation, queryCache} from 'react-query'
 
 const loadingBook = {
   title: 'Loading...',
@@ -30,26 +31,39 @@ const loadingBook = {
 function BookScreen({user}) {
   const {bookId} = useParams()
   // 💣 remove the useAsync call here
-  const {data, run} = useAsync()
+  // const {data, run} = useAsync()
 
   // 🐨 call useQuery here
   // queryKey should be ['book', {bookId}]
   // queryFn should be what's currently passed in the run function below
+  const {data: book = loadingBook} = useQuery({
+    queryKey: ['book', {bookId}],
+    queryFn: () =>
+      client(`books/${bookId}`, {token: user.token}).then(data => data.book),
+  })
 
   // 💣 remove the useEffect here (react-query will handle that now)
-  React.useEffect(() => {
-    run(client(`books/${bookId}`, {token: user.token}))
-  }, [run, bookId, user.token])
+  // React.useEffect(() => {
+  //   run(client(`books/${bookId}`, {token: user.token}))
+  // }, [run, bookId, user.token])
 
   // 🐨 call useQuery to get the list item from the list-items endpoint
   // queryKey should be 'list-items'
   // queryFn should call the 'list-items' endpoint with the user's token
-  const listItem = null
+  const {data: listItems} = useQuery({
+    queryKey: ['list-items'],
+    queryFn: key =>
+      client('list-items', {token: user.token}).then(data => data.listItems),
+  })
+
+  // 🐨 search through the listItems you got from react-query and find the
+  // one with the right bookId.
+  const listItem = listItems?.find(i => i.bookId === book.id) ?? null
   // 🦉 NOTE: the backend doesn't support getting a single list-item by it's ID
   // and instead expects us to cache all the list items and look them up in our
   // cache. This works out because we're using react-query for caching!
 
-  const book = data?.book ?? loadingBook
+  // const book = data?.book ?? loadingBook
   const {title, author, coverImageUrl, publisher, synopsis} = book
 
   return (
@@ -133,6 +147,15 @@ function ListItemTimeframe({listItem}) {
 
 function NotesTextarea({listItem, user}) {
   // 🐨 call useMutation here
+  const [mutate] = useMutation(
+    updates =>
+      client(`list-items/${updates.id}`, {
+        method: 'PUT',
+        data: updates,
+        token: user.token,
+      }),
+    {onSettled: () => queryCache.invalidateQueries('list-items')},
+  )
   // the mutate function should call the list-items/:listItemId endpoint with a PUT
   //   and the updates as data. The mutate function will be called with the updates
   //   you can pass as data.
@@ -140,7 +163,6 @@ function NotesTextarea({listItem, user}) {
   // then use the `onSettled` config option to queryCache.invalidateQueries('list-items')
   // 💣 DELETE THIS ESLINT IGNORE!! Don't ignore the exhaustive deps rule please
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const mutate = () => {}
   const debouncedMutate = React.useMemo(
     () => debounceFn(mutate, {wait: 300}),
     [mutate],
