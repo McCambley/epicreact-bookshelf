@@ -3,12 +3,30 @@ import './bootstrap'
 import * as React from 'react'
 import {createRoot} from 'react-dom/client'
 import {App} from './app'
+import {ReactQueryConfigProvider} from 'react-query'
+
+const queryConfig = {
+  queries: {
+    useErrorBoundary: true,
+    refetchOnWindowFocus: false,
+    retry: (count, error) => {
+      if (error.status === 404) return false
+      if (count < 2) return true
+      return false
+    },
+  },
+  mutations: {},
+}
 
 // ignore the rootRef in this file. I'm just doing it here to make
 // the tests I write to check your work easier.
 export const rootRef = {}
 loadDevTools(() => {
   const root = createRoot(document.getElementById('root'))
-  root.render(<App />)
+  root.render(
+    <ReactQueryConfigProvider config={queryConfig}>
+      <App />
+    </ReactQueryConfigProvider>,
+  )
   rootRef.current = root
 })
