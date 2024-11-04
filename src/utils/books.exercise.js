@@ -33,8 +33,7 @@ function useBook(bookId, user) {
     queryFn: () =>
       client(`books/${bookId}`, {token: user.token}).then(data => data.book),
   })
-
   return data ?? loadingBook
 }
 
-export {useBookSearch, useBook}
+export {useBook, useBookSearch}
