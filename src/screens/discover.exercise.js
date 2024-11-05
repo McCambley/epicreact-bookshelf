@@ -18,10 +18,7 @@ function DiscoverBooksScreen({user}) {
   )
 
   React.useEffect(() => {
-    return () => {
-      // Clear discover cache
-      refetchBookSearchQuery(user)
-    }
+    return () => refetchBookSearchQuery(user)
   }, [user])
 
   function handleSearchSubmit(event) {
