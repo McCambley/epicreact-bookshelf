@@ -1,19 +1,16 @@
 import {useQuery, useMutation, queryCache} from 'react-query'
+import {setQueryDataForBook} from './books'
 import {client} from './api-client'
 
 function useListItems(user) {
   const {data: listItems} = useQuery({
     queryKey: 'list-items',
-
     queryFn: () =>
       client(`list-items`, {token: user.token}).then(data => data.listItems),
     config: {
       onSuccess(listItems) {
         for (const listItem of listItems) {
-          queryCache.setQueryData(
-            ['book', {bookId: listItem.book.id}],
-            listItem.book,
-          )
+          setQueryDataForBook(listItem.book)
         }
       },
     },
@@ -38,7 +35,17 @@ function useUpdateListItem(user, options) {
         data: updates,
         token: user.token,
       }),
-    {...defaultMutationOptions, ...options},
+    {
+      ...defaultMutationOptions,
+      ...options,
+      onMutate(newItem) {
+        queryCache.setQueryData('list-items', old =>
+          old.map(item =>
+            item.id === newItem.id ? {...item, ...newItem} : item,
+          ),
+        )
+      },
+    },
   )
 }
 

@@ -25,7 +25,7 @@ const getBookSearchConfig = (query, user) => ({
   config: {
     onSuccess(books) {
       for (const book of books) {
-        queryCache.setQueryData(['book', {bookId: book.id}], book)
+        setQueryDataForBook(book)
       }
     },
   },
@@ -50,4 +50,8 @@ async function refetchBookSearchQuery(user) {
   await queryCache.prefetchQuery(getBookSearchConfig('', user))
 }
 
-export {useBook, useBookSearch, refetchBookSearchQuery}
+function setQueryDataForBook(book) {
+  queryCache.setQueryData(['book', {bookId: book.id}], book)
+}
+
+export {useBook, useBookSearch, refetchBookSearchQuery, setQueryDataForBook}
