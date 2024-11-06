@@ -1,5 +1,13 @@
-import React from 'react'
+import * as React from 'react'
 
-const AuthContext = React.createContext({})
+const AuthContext = React.createContext()
 
-export {AuthContext}
+function useAuth() {
+  const context = React.useContext(AuthContext)
+  if (context === undefined) {
+    throw Error('useAuth must be used in a child of AuthContext.Provider')
+  }
+  return context
+}
+
+export {AuthContext, useAuth}
