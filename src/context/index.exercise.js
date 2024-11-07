@@ -3,6 +3,7 @@
 import React from 'react'
 import {AuthProvider} from './auth-context.exercise'
 import {ReactQueryConfigProvider} from 'react-query'
+import {BrowserRouter as Router} from 'react-router-dom'
 
 const queryConfig = {
   queries: {
@@ -19,7 +20,9 @@ const queryConfig = {
 function AppProviders({children}) {
   return (
     <ReactQueryConfigProvider config={queryConfig}>
-      <AuthProvider>{children}</AuthProvider>
+      <AuthProvider>
+        <Router>{children}</Router>
+      </AuthProvider>
     </ReactQueryConfigProvider>
   )
 }
