@@ -1,6 +1,4 @@
-/** @jsx jsx */
-import {jsx} from '@emotion/core'
-
+import * as React from 'react'
 import {BrowserRouter as Router} from 'react-router-dom'
 import {useAuth} from './context/auth-context'
 import {AuthenticatedApp} from './authenticated-app'
