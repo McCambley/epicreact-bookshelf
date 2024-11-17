@@ -3,6 +3,14 @@ import {renderHook, act} from '@testing-library/react'
 // 🐨 Here's the thing you'll be testing:
 import {useAsync} from '../hooks'
 
+beforeEach(() => {
+  jest.spyOn(console, 'error')
+})
+
+afterEach(() => {
+  console.error.mockRestore()
+})
+
 // 💰 I'm going to give this to you. It's a way for you to create a promise
 // which you can imperatively resolve or reject whenever you want.
 function deferred() {
@@ -26,7 +34,6 @@ function deferred() {
 test('calling run with a promise which resolves', async () => {
   const {promise, resolve} = deferred()
   const {result} = renderHook(() => useAsync())
-  console.log(result.current)
   let p
   act(() => {
     p = result.current.run(promise)
@@ -73,38 +80,172 @@ test('calling run with a promise which resolves', async () => {
     reset: expect.any(Function),
   })
 })
-// 🐨 get a promise and resolve function from the deferred utility
-// 🐨 use renderHook with useAsync to get the result
-// 🐨 assert the result.current is the correct default state
 
-// 🐨 call `run`, passing the promise
-//    (💰 this updates state so it needs to be done in an `act` callback)
-// 🐨 assert that result.current is the correct pending state
+test('calling run with a promise which rejects', async () => {
+  // 🐨 this will be very similar to the previous test, except you'll reject the
+  // promise instead and assert on the error state.
+  // 💰 to avoid the promise actually failing your test, you can catch
+  //    the promise returned from `run` with `.catch(() => {})`
+  const {promise, reject} = deferred()
+  const {result} = renderHook(() => useAsync())
+  let p
+  act(() => {
+    p = result.current.run(promise)
+  })
 
-// 🐨 call resolve and wait for the promise to be resolved
-//    (💰 this updates state too and you'll need it to be an async `act` call so you can await the promise)
-// 🐨 assert the resolved state
+  const rejectedValue = Symbol({rejectedValue: 'val'})
+  await act(async () => {
+    reject(rejectedValue)
+    await p.catch(e => {
+      // ignore error
+    })
+  })
+  expect(result.current).toEqual({
+    status: 'rejected',
+    data: null,
+    error: rejectedValue,
 
-// 🐨 call `reset` (💰 this will update state, so...)
-// 🐨 assert the result.current has actually been reset
+    isIdle: false,
+    isLoading: false,
+    isError: true,
+    isSuccess: false,
 
-test.todo('calling run with a promise which rejects')
-// 🐨 this will be very similar to the previous test, except you'll reject the
-// promise instead and assert on the error state.
-// 💰 to avoid the promise actually failing your test, you can catch
-//    the promise returned from `run` with `.catch(() => {})`
+    setData: expect.any(Function),
+    setError: expect.any(Function),
+    run: expect.any(Function),
+    reset: expect.any(Function),
+  })
 
-test.todo('can specify an initial state')
-// 💰 useAsync(customInitialState)
+  act(() => {
+    result.current.reset()
+  })
 
-test.todo('can set the data')
-// 💰 result.current.setData('whatever you want')
+  expect(result.current).toEqual({
+    status: 'idle',
+    data: null,
+    error: null,
 
-test.todo('can set the error')
-// 💰 result.current.setError('whatever you want')
+    isIdle: true,
+    isLoading: false,
+    isError: false,
+    isSuccess: false,
 
-test.todo('No state updates happen if the component is unmounted while pending')
-// 💰 const {result, unmount} = renderHook(...)
-// 🐨 ensure that console.error is not called (React will call console.error if updates happen when unmounted)
+    setData: expect.any(Function),
+    setError: expect.any(Function),
+    run: expect.any(Function),
+    reset: expect.any(Function),
+  })
+})
 
-test.todo('calling "run" without a promise results in an early error')
+test('can specify an initial state', () => {
+  const mockData = Symbol('resolved value')
+  const customInitialState = {status: 'resolved', data: mockData}
+  const {result} = renderHook(() => useAsync(customInitialState))
+  expect(result.current).toEqual({
+    status: 'resolved',
+    data: customInitialState.data,
+    error: null,
+
+    isIdle: false,
+    isLoading: false,
+    isError: false,
+    isSuccess: true,
+
+    setData: expect.any(Function),
+    setError: expect.any(Function),
+    run: expect.any(Function),
+    reset: expect.any(Function),
+  })
+})
+
+test('can set the data', async () => {
+  // 💰 result.current.setData('whatever you want')
+  const mockData = Symbol('resolved value')
+  const customInitialState = {status: 'resolved', data: mockData}
+  const {result} = renderHook(() => useAsync(customInitialState))
+  expect(result.current).toEqual({
+    status: 'resolved',
+    data: customInitialState.data,
+    error: null,
+
+    isIdle: false,
+    isLoading: false,
+    isError: false,
+    isSuccess: true,
+
+    setData: expect.any(Function),
+    setError: expect.any(Function),
+    run: expect.any(Function),
+    reset: expect.any(Function),
+  })
+
+  const newData = Symbol('new data')
+
+  act(() => {
+    result.current.setData(newData)
+  })
+  expect(result.current).toEqual({
+    status: 'resolved',
+    data: newData,
+    error: null,
+
+    isIdle: false,
+    isLoading: false,
+    isError: false,
+    isSuccess: true,
+
+    setData: expect.any(Function),
+    setError: expect.any(Function),
+    run: expect.any(Function),
+    reset: expect.any(Function),
+  })
+})
+
+test('can set the error', async () => {
+  const {result} = renderHook(() => useAsync())
+  const newError = Symbol('new data')
+
+  act(() => {
+    result.current.setError(newError)
+  })
+
+  expect(result.current).toEqual({
+    status: 'rejected',
+    data: null,
+    error: newError,
+
+    isIdle: false,
+    isLoading: false,
+    isError: true,
+    isSuccess: false,
+
+    setData: expect.any(Function),
+    setError: expect.any(Function),
+    run: expect.any(Function),
+    reset: expect.any(Function),
+  })
+})
+
+test('No state updates happen if the component is unmounted while pending', async () => {
+  const {result, unmount} = renderHook(() => useAsync())
+  const {promise, resolve} = deferred()
+  // 💰 const {result, unmount} = renderHook(...)
+  // 🐨 ensure that console.error is not called (React will call console.error if updates happen when unmounted)
+  let p
+  act(() => {
+    p = result.current.run(promise)
+  })
+  unmount()
+  await act(async () => {
+    resolve()
+    await p
+  })
+  expect(console.error).not.toHaveBeenCalled()
+})
+
+test('calling "run" without a promise results in an early error', async () => {
+  const {result} = renderHook(() => useAsync())
+  expect(() => result.current.run()).toThrowErrorMatchingInlineSnapshot(
+    `"The argument passed to useAsync().run must be a promise. Maybe a function that's passed isn't returning anything?"`,
+  )
+})
