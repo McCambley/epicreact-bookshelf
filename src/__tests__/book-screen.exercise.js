@@ -5,18 +5,28 @@ import * as auth from 'auth-provider'
 import {buildUser, buildBook} from 'test/generate'
 import {AppProviders} from 'context'
 import {App} from 'app'
+import * as usersDB from 'test/data/users'
+import * as booksDB from 'test/data/books'
+import * as listItemsDB from 'test/data/list-items'
 
 // general cleanup
 afterEach(async () => {
   queryCache.clear()
-  await auth.logout()
+  await Promise.all([
+    auth.logout(),
+    usersDB.reset(),
+    booksDB.reset(),
+    listItemsDB.reset(),
+  ])
 })
 
 test('renders all the book information', async () => {
   const user = buildUser()
-  window.localStorage.setItem(auth.localStorageKey, 'SOME_FAKE_TOKEN')
+  await usersDB.create(user)
+  const authUser = await usersDB.authenticate(user)
+  window.localStorage.setItem(auth.localStorageKey, authUser.token)
 
-  const book = buildBook()
+  const book = await booksDB.create(buildBook())
   const route = `/book/${book.id}`
   window.history.pushState({}, 'Test page', route)
 
@@ -26,7 +36,7 @@ test('renders all the book information', async () => {
       return {
         ok: true,
         json: async () => ({
-          user: {...user, token: 'SOME_FAKE_TOKEN'},
+          user: {...user, token: authUser.token},
           listItems: [],
         }),
       }
