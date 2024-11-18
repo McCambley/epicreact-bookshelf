@@ -1,22 +1,25 @@
-// 🐨 here are the things you're going to need for this test:
 import * as React from 'react'
 import {render, screen, waitForElementToBeRemoved} from '@testing-library/react'
 import {queryCache} from 'react-query'
-import {buildUser, buildBook} from 'test/generate'
 import * as auth from 'auth-provider'
+import {buildUser, buildBook} from 'test/generate'
 import {AppProviders} from 'context'
 import {App} from 'app'
 
+// general cleanup
 afterEach(async () => {
   queryCache.clear()
   await auth.logout()
 })
 
 test('renders all the book information', async () => {
-  window.localStorage.setItem(auth.localStorageKey, 'SOME_FAKE_TOKEN')
-  const book = buildBook()
   const user = buildUser()
-  window.history.pushState({}, 'Test page', `/book/${book.id}`)
+  window.localStorage.setItem(auth.localStorageKey, 'SOME_FAKE_TOKEN')
+
+  const book = buildBook()
+  const route = `/book/${book.id}`
+  window.history.pushState({}, 'Test page', route)
+
   const originalFetch = window.fetch
   window.fetch = async (url, config) => {
     if (url.endsWith('/bootstrap')) {
@@ -27,19 +30,18 @@ test('renders all the book information', async () => {
           listItems: [],
         }),
       }
+    } else if (url.endsWith(`/books/${book.id}`)) {
+      return {ok: true, json: async () => ({book})}
     }
-    if (url.endsWith(`/books/${book.id}`)) {
-      return {
-        ok: true,
-        json: async () => ({book}),
-      }
-    }
-    console.log({url, config})
     return originalFetch(url, config)
   }
+
   render(<App />, {wrapper: AppProviders})
-  await waitForElementToBeRemoved(() => screen.getByLabelText(/loading/i))
-  await waitForElementToBeRemoved(() => screen.getAllByText(/loading/i))
+
+  await waitForElementToBeRemoved(() => [
+    ...screen.queryAllByLabelText(/loading/i),
+    ...screen.queryAllByText(/loading/i),
+  ])
 
   expect(screen.getByRole('heading', {name: book.title})).toBeInTheDocument()
   expect(screen.getByText(book.author)).toBeInTheDocument()
@@ -47,11 +49,12 @@ test('renders all the book information', async () => {
   expect(screen.getByText(book.synopsis)).toBeInTheDocument()
   expect(screen.getByRole('img', {name: /book cover/i})).toHaveAttribute(
     'src',
-    book.coverImgUrl,
+    book.coverImageUrl,
   )
   expect(screen.getByRole('button', {name: /add to list/i})).toBeInTheDocument()
+
   expect(
-    screen.queryByRole('button', {name: /remove to list/i}),
+    screen.queryByRole('button', {name: /remove from list/i}),
   ).not.toBeInTheDocument()
   expect(
     screen.queryByRole('button', {name: /mark as read/i}),
@@ -60,7 +63,7 @@ test('renders all the book information', async () => {
     screen.queryByRole('button', {name: /mark as unread/i}),
   ).not.toBeInTheDocument()
   expect(
-    screen.queryByRole('textarea', {name: /notes/i}),
+    screen.queryByRole('textbox', {name: /notes/i}),
   ).not.toBeInTheDocument()
   expect(screen.queryByRole('radio', {name: /star/i})).not.toBeInTheDocument()
   expect(screen.queryByLabelText(/start date/i)).not.toBeInTheDocument()
