@@ -3,11 +3,11 @@ import {render, screen, waitForElementToBeRemoved} from '@testing-library/react'
 import {queryCache} from 'react-query'
 import * as auth from 'auth-provider'
 import {buildUser, buildBook} from 'test/generate'
-import {AppProviders} from 'context'
-import {App} from 'app'
 import * as usersDB from 'test/data/users'
 import * as booksDB from 'test/data/books'
 import * as listItemsDB from 'test/data/list-items'
+import {AppProviders} from 'context'
+import {App} from 'app'
 
 // general cleanup
 afterEach(async () => {
@@ -29,22 +29,6 @@ test('renders all the book information', async () => {
   const book = await booksDB.create(buildBook())
   const route = `/book/${book.id}`
   window.history.pushState({}, 'Test page', route)
-
-  const originalFetch = window.fetch
-  window.fetch = async (url, config) => {
-    if (url.endsWith('/bootstrap')) {
-      return {
-        ok: true,
-        json: async () => ({
-          user: {...user, token: authUser.token},
-          listItems: [],
-        }),
-      }
-    } else if (url.endsWith(`/books/${book.id}`)) {
-      return {ok: true, json: async () => ({book})}
-    }
-    return originalFetch(url, config)
-  }
 
   render(<App />, {wrapper: AppProviders})
 
