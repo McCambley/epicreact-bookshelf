@@ -1,14 +1,14 @@
 import * as React from 'react'
+import {
+  render,
+  screen,
+  waitForLoadingToFinish,
+  userEvent,
+} from 'test/app-test-utils'
 import {buildBook} from 'test/generate'
 import * as booksDB from 'test/data/books'
 import {formatDate} from 'utils/misc'
 import {App} from 'app'
-import {
-  render,
-  waitForLoadingToFinish,
-  screen,
-  userEvent,
-} from 'test/app-test-utils'
 
 test('renders all the book information', async () => {
   const book = await booksDB.create(buildBook())
