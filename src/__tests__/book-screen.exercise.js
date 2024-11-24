@@ -7,9 +7,9 @@ import {buildUser, buildBook} from 'test/generate'
 import * as usersDB from 'test/data/users'
 import * as booksDB from 'test/data/books'
 import * as listItemsDB from 'test/data/list-items'
+import {formatDate} from 'utils/misc'
 import {AppProviders} from 'context'
 import {App} from 'app'
-import {formatDate} from 'utils/misc'
 
 // general cleanup
 afterEach(async () => {
@@ -65,7 +65,7 @@ test('renders all the book information', async () => {
   expect(screen.queryByLabelText(/start date/i)).not.toBeInTheDocument()
 })
 
-test('Can create a list item for a book', async () => {
+test('can create a list item for the book', async () => {
   const user = buildUser()
   await usersDB.create(user)
   const authUser = await usersDB.authenticate(user)
@@ -85,24 +85,28 @@ test('Can create a list item for a book', async () => {
   const addToListButton = screen.getByRole('button', {name: /add to list/i})
   await userEvent.click(addToListButton)
   expect(addToListButton).toBeDisabled()
+
   await waitForElementToBeRemoved(() => [
     ...screen.queryAllByLabelText(/loading/i),
     ...screen.queryAllByText(/loading/i),
   ])
 
-  expect(screen.getByLabelText(/mark as read/i)).toBeInTheDocument()
-  expect(screen.getByLabelText(/remove from list/i)).toBeInTheDocument()
+  expect(
+    screen.getByRole('button', {name: /mark as read/i}),
+  ).toBeInTheDocument()
+  expect(
+    screen.getByRole('button', {name: /remove from list/i}),
+  ).toBeInTheDocument()
   expect(screen.getByRole('textbox', {name: /notes/i})).toBeInTheDocument()
 
   const startDateNode = screen.getByLabelText(/start date/i)
-  expect(startDateNode).toHaveTextContent(formatDate(new Date()))
+  expect(startDateNode).toHaveTextContent(formatDate(Date.now()))
 
   expect(
-    screen.queryByRole('button', {name: /add to list/}),
+    screen.queryByRole('button', {name: /add to list/i}),
   ).not.toBeInTheDocument()
   expect(
-    screen.queryByRole('button', {name: /mark as unread/}),
+    screen.queryByRole('button', {name: /mark as unread/i}),
   ).not.toBeInTheDocument()
-  expect(screen.queryByRole('radio', {name: /star/})).not.toBeInTheDocument()
-  //   screen.debug()
+  expect(screen.queryByRole('radio', {name: /star/i})).not.toBeInTheDocument()
 })
