@@ -164,3 +164,37 @@ test('can edit a note', async () => {
     notes: newNotes,
   })
 })
+
+test('shows an error message when the book fails to load', async () => {
+  // using fake timers to skip debounce time
+  jest.useFakeTimers()
+  await renderBookScreen({
+    book: {id: 'FAIL'},
+    listItem: null,
+  })
+  const errorDisplay = screen.getByRole('alert')
+  expect(errorDisplay).toBeInTheDocument()
+  expect(errorDisplay.textContent).toContain('Book not found')
+})
+
+test('note update failures are displayed', async () => {
+  // using fake timers to skip debounce time
+  jest.useFakeTimers()
+
+  await renderBookScreen()
+
+  const newNotes = 'FAIL'
+  const notesTextarea = screen.getByRole('textbox', {name: /notes/i})
+
+  await fakeTimerUserEvent.clear(notesTextarea)
+  await fakeTimerUserEvent.type(notesTextarea, newNotes)
+
+  // wait for the loading spinner to show up
+  await screen.findByLabelText(/loading/i)
+  // wait for the loading spinner to go away
+  await waitForLoadingToFinish()
+
+  const errorDisplay = screen.getByRole('alert')
+  expect(errorDisplay).toBeInTheDocument()
+  expect(errorDisplay.textContent).toContain('error')
+})
