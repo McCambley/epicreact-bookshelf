@@ -13,7 +13,11 @@ import * as listItemsDB from 'test/data/list-items'
 import {formatDate} from 'utils/misc'
 import {App} from 'app'
 
-async function renderBookScreen({listItem, user, book} = {}) {
+const fakeTimerUserEvent = userEvent.setup({
+  advanceTimers: () => jest.runOnlyPendingTimers(),
+})
+
+async function renderBookScreen({user, book, listItem} = {}) {
   if (user === undefined) {
     user = await loginAsUser()
   }
@@ -25,13 +29,15 @@ async function renderBookScreen({listItem, user, book} = {}) {
   }
   const route = `/book/${book.id}`
 
-  const utils = await render(<App />, {route, user})
-  return {...utils, book, user, listItem}
-}
+  const utils = await render(<App />, {user, route})
 
-const fakeTimerUserEvent = userEvent.setup({
-  advanceTimers: () => jest.runOnlyPendingTimers(),
-})
+  return {
+    ...utils,
+    book,
+    user,
+    listItem,
+  }
+}
 
 test('renders all the book information', async () => {
   const {book} = await renderBookScreen({listItem: null})
@@ -111,6 +117,8 @@ test('can remove a list item for the book', async () => {
 
 test('can mark a list item as read', async () => {
   const {listItem} = await renderBookScreen()
+
+  // set the listItem to be unread in the DB
   await listItemsDB.update(listItem.id, {finishDate: null})
 
   const markAsReadButton = screen.getByRole('button', {name: /mark as read/i})
