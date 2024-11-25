@@ -12,6 +12,9 @@ import * as booksDB from 'test/data/books'
 import * as listItemsDB from 'test/data/list-items'
 import {formatDate} from 'utils/misc'
 import {App} from 'app'
+import {server, rest} from 'test/server'
+
+const apiUrl = process.env.REACT_APP_API_URL
 
 const fakeTimerUserEvent = userEvent.setup({
   advanceTimers: () => jest.runOnlyPendingTimers(),
@@ -165,36 +168,57 @@ test('can edit a note', async () => {
   })
 })
 
-test('shows an error message when the book fails to load', async () => {
-  // using fake timers to skip debounce time
-  jest.useFakeTimers()
-  await renderBookScreen({
-    book: {id: 'FAIL'},
-    listItem: null,
+describe('console error', () => {
+  beforeAll(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {})
   })
-  const errorDisplay = screen.getByRole('alert')
-  expect(errorDisplay).toBeInTheDocument()
-  expect(errorDisplay.textContent).toContain('Book not found')
-})
+  afterAll(() => {
+    console.error.mockRestore()
+  })
+  test('shows an error message when the book fails to load', async () => {
+    // using fake timers to skip debounce time
+    jest.useFakeTimers()
+    const book = {id: 'FAIL'}
+    await renderBookScreen({
+      book,
+      listItem: null,
+    })
+    expect(screen.getByRole('alert').textContent).toMatchInlineSnapshot(
+      `"There was an error: Book not found"`,
+    )
+  })
 
-test('note update failures are displayed', async () => {
-  // using fake timers to skip debounce time
-  jest.useFakeTimers()
+  test('note update failures are displayed', async () => {
+    // using fake timers to skip debounce time
+    jest.useFakeTimers()
+    await renderBookScreen()
 
-  await renderBookScreen()
+    const newNotes = faker.lorem.words()
+    const notesTextarea = screen.getByRole('textbox', {name: /notes/i})
 
-  const newNotes = 'FAIL'
-  const notesTextarea = screen.getByRole('textbox', {name: /notes/i})
+    // Mock out error response from server for this response
+    server.use(
+      rest.put(`${apiUrl}/list-items/:listItemId`, async (req, res, ctx) => {
+        return res(
+          ctx.status(400),
+          ctx.json({
+            status: 400,
+            message: 'OH NO',
+          }),
+        )
+      }),
+    )
 
-  await fakeTimerUserEvent.clear(notesTextarea)
-  await fakeTimerUserEvent.type(notesTextarea, newNotes)
+    await fakeTimerUserEvent.clear(notesTextarea)
+    await fakeTimerUserEvent.type(notesTextarea, newNotes)
 
-  // wait for the loading spinner to show up
-  await screen.findByLabelText(/loading/i)
-  // wait for the loading spinner to go away
-  await waitForLoadingToFinish()
+    // wait for the loading spinner to show up
+    await screen.findByLabelText(/loading/i)
+    // wait for the loading spinner to go away
+    await waitForLoadingToFinish()
 
-  const errorDisplay = screen.getByRole('alert')
-  expect(errorDisplay).toBeInTheDocument()
-  expect(errorDisplay.textContent).toContain('error')
+    expect(screen.getByRole('alert').textContent).toMatchInlineSnapshot(
+      `"There was an error: OH NO"`,
+    )
+  })
 })
