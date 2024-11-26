@@ -81,7 +81,7 @@ function BookRow({book}) {
           <small css={{whiteSpace: 'break-spaces', display: 'block'}}>
             {book.synopsis.substring(0, 500)}...
           </small>
-        </div>
+        </div>w
       </div>
     </div>
   )
