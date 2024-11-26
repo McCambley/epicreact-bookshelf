@@ -3,7 +3,6 @@ import {jsx} from '@emotion/core'
 
 import * as React from 'react'
 import * as auth from 'auth-provider'
-import {BrowserRouter} from 'react-router-dom'
 import {FullPageSpinner} from './components/lib'
 import * as colors from './styles/colors'
 import {client} from './utils/api-client'
@@ -19,6 +18,7 @@ async function getUser() {
     const data = await client('me', {token})
     user = data.user
   }
+
   return user
 }
 
@@ -68,14 +68,10 @@ function App() {
   }
 
   if (isSuccess) {
-    const props = {user, login, register, logout}
-    // 🐨 wrap the BrowserRouter around the AuthenticatedApp
     return user ? (
-      <BrowserRouter>
-        <AuthenticatedApp {...props} />
-      </BrowserRouter>
+      <AuthenticatedApp user={user} logout={logout} />
     ) : (
-      <UnauthenticatedApp {...props} />
+      <UnauthenticatedApp login={login} register={register} />
     )
   }
 }

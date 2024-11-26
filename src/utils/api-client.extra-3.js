@@ -1,7 +1,18 @@
 import * as auth from 'auth-provider'
 const apiURL = process.env.REACT_APP_API_URL
 
-export * from './api-client.exercise'
+function client(
+  endpoint,
+  {token, headers: customHeaders, ...customConfig} = {},
+) {
+  const config = {
+    method: 'GET',
+    headers: {
+      Authorization: token ? `Bearer ${token}` : undefined,
+      ...customHeaders,
+    },
+    ...customConfig,
+  }
 
   return window.fetch(`${apiURL}/${endpoint}`, config).then(async response => {
     if (response.status === 401) {
@@ -19,8 +30,4 @@ export * from './api-client.exercise'
   })
 }
 
-// 💯 automatically logout on 401
-// export * from './api-client.extra-3'
-
-// 💯 Support posting data
-// export * from './api-client.extra-4'
+export {client}

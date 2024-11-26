@@ -38,10 +38,7 @@ function go() {
   function getRedirect(baseRoute) {
     baseRoute = baseRoute.endsWith('/') ? baseRoute : `${baseRoute}/`
     baseRoute = baseRoute.startsWith('/') ? baseRoute : `/${baseRoute}`
-    return `
-${baseRoute}        ${baseRoute}discover              302!
-${baseRoute}*       ${baseRoute}index.html        200
-    `.trim()
+    return `${baseRoute}*       ${baseRoute}index.html        200`.trim()
   }
 
   let redirects = []
