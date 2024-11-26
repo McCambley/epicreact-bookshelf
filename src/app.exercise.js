@@ -1,17 +1,19 @@
 /** @jsx jsx */
 import {jsx} from '@emotion/core'
 
-import React, {useState, useEffect} from 'react'
+import * as React from 'react'
 import * as auth from 'auth-provider'
+import {BrowserRouter} from 'react-router-dom'
+import {FullPageSpinner} from './components/lib'
+import * as colors from './styles/colors'
+import {client} from './utils/api-client'
+import {useAsync} from './utils/hooks'
 import {AuthenticatedApp} from './authenticated-app'
 import {UnauthenticatedApp} from './unauthenticated-app'
-import {client} from './utils/api-client'
-import {useAsync} from 'utils/hooks'
-import * as colors from './styles/colors'
-import {FullPageSpinner} from 'components/lib'
 
 async function getUser() {
   let user = null
+
   const token = await auth.getToken()
   if (token) {
     const data = await client('me', {token})
@@ -24,27 +26,23 @@ function App() {
   const {
     data: user,
     error,
-    isIdle,
     isLoading,
-    isSuccess,
+    isIdle,
     isError,
+    isSuccess,
     run,
     setData,
   } = useAsync()
 
-  useEffect(() => {
+  React.useEffect(() => {
     run(getUser())
   }, [run])
 
-  async function login(form) {
-    await run(auth.login(form))
-  }
-  async function register(form) {
-    await run(auth.register(form))
-  }
-
-  async function logout() {
-    run(auth.logout())
+  const login = form => auth.login(form).then(user => setData(user))
+  const register = form => auth.register(form).then(user => setData(user))
+  const logout = () => {
+    auth.logout()
+    setData(null)
   }
 
   if (isLoading || isIdle) {
@@ -52,31 +50,34 @@ function App() {
   }
 
   if (isError) {
-    ;<div
-      css={{
-        color: colors.danger,
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <p>Uh oh... There's a problem. Try refreshing the app.</p>
-      <pre>{error.message}</pre>
-    </div>
+    return (
+      <div
+        css={{
+          color: colors.danger,
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <p>Uh oh... There's a problem. Try refreshing the app.</p>
+        <pre>{error.message}</pre>
+      </div>
+    )
   }
 
-  return user ? (
-    <AuthenticatedApp user={user} logout={logout} />
-  ) : (
-    <UnauthenticatedApp login={login} register={register} />
-  )
+  if (isSuccess) {
+    const props = {user, login, register, logout}
+    // 🐨 wrap the BrowserRouter around the AuthenticatedApp
+    return user ? (
+      <BrowserRouter>
+        <AuthenticatedApp {...props} />
+      </BrowserRouter>
+    ) : (
+      <UnauthenticatedApp {...props} />
+    )
+  }
 }
 
 export {App}
-
-/*
-eslint
-  no-unused-vars: "off",
-*/

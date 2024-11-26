@@ -1,4 +1,4 @@
-# Make HTTP Requests
+# Routing
 
 ## 📝 Your Notes
 
@@ -6,192 +6,266 @@ Elaborate on your learnings here in `INSTRUCTIONS.md`
 
 ## Background
 
-Our app wouldn't be very interesting without the ability to request data from a
-backend for the user to view and interact with. The way to do this in the web is
-using HTTP with the `window.fetch` API. Here's a quick simple example of that
-API in action:
+The URL is arguably one of the best features of the web. The ability for one
+user to share a link to another user who can use it to go directly to a piece of
+content on a given website is fantastic. Other platforms don't really have this.
+
+The de-facto standard library for routing React applications is
+[React Router](https://reactrouter.com). It's terrific.
+
+The idea behind routing on the web is you have some API that informs you of
+changes to the URL, then you react (no pun intended) to those changes by
+rendering the correct user interface based on that URL route. In addition, you
+can change the URL when the user performs an action (like clicking a link or
+submitting a form). This all happens client-side and does not reload the
+browser.
+
+Here's a quick demo of a few of the features you'll need to know about for this
+exercise:
 
 ```javascript
-window
-  .fetch('http://example.com/movies.json')
-  .then(response => {
-    return response.json()
-  })
-  .then(data => {
-    console.log(data)
-  })
+import * as React from 'react'
+import ReactDOM from 'react-dom'
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useParams,
+  Link,
+} from 'react-router-dom'
+
+function Home() {
+  return <h2>Home</h2>
+}
+
+function About() {
+  return <h2>About</h2>
+}
+
+function Dog() {
+  const params = useParams()
+  const {dogId} = params
+  return <img src={`/img/dogs/${dogId}`} />
+}
+
+function Nav() {
+  return (
+    <nav>
+      <Link to="/">Home</Link>
+      <Link to="/about">About</Link>
+      <Link to="/dog/123">My Favorite Dog</Link>
+    </nav>
+  )
+}
+
+function YouLost() {
+  return <div>You lost?</div>
+}
+
+function App() {
+  return (
+    <div>
+      <h1>Welcome</h1>
+      <Nav />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/dog/:dogId" element={<Dog />} />
+        <Route path="*" element={<YouLost />} />
+      </Routes>
+    </div>
+  )
+}
+
+function AppWithRouter() {
+  return (
+    <Router>
+      <App />
+    </Router>
+  )
+}
+
+ReactDOM.render(<AppWithRouter />, document.getElementById('app'))
 ```
 
-All the HTTP methods are supported as well, for example, here's how you would
-POST data:
+That should be enough to get you going on this exercise.
 
-```javascript
-window
-  .fetch('http://example.com/movies', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      // if auth is required. Each API may be different, but
-      // the Authorization header with a token is common.
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data), // body data type must match "content-type" header
-  })
-  .then(response => {
-    return response.json()
-  })
-  .then(data => {
-    console.log(data)
-  })
-```
-
-If the request fails with an unsuccessful status code (`>= 400`), then the
-`response` object's `ok` property will be false. It's common to reject the
-promise in this case:
-
-```javascript
-window.fetch(url).then(async response => {
-  const data = await response.json()
-  if (response.ok) {
-    return data
-  } else {
-    return Promise.reject(data)
-  }
-})
-```
-
-It's good practice to wrap `window.fetch` in your own function so you can set
-defaults (especially handy for authentication). Additionally, it's common to
-have "clients" which build upon this wrapper for operations on different
-resources.
-
-Integrating this kind of thing with React involves utilizing React's `useEffect`
-hook for making the request and `useState` for managing the status of the
-request as well as the response data and error information.
-
-You might consider making the network request in the event handler. In general I
-recommend to do all your side effects inside the `useEffect`. This is because in
-the event handler you don't have any possibility to prevent race conditions, or
-to implement any cancellation mechanism.
-
-📜 https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
+As a fun exercise in routing on the web, you can read this blog post
+demonstrating how you might build your own React Router (version 4):
+https://ui.dev/build-your-own-react-router/
 
 ## Exercise
 
 Production deploys:
 
-- [Exercise](https://exercises-03-data-fetching.bookshelf.lol/exercise)
-- [Final](https://exercises-03-data-fetching.bookshelf.lol/)
+- [Exercise](https://exercises-05-routing.bookshelf.lol/exercise)
+- [Final](https://exercises-05-routing.bookshelf.lol/)
 
-👨‍💼 Our users are getting restless and want to start looking at some books, so
-we're putting our login flow to the side for a moment so we can work on the book
-search feature. The backend is ready to go for this and we've already set up an
-environment variable which we can use in our code for the API url (you can see
-that in `.env` and `.env.development`). The URL for the search API is:
+👨‍💼 Users want to be able to click on the book in the search results and be taken
+to a special page for that book. We want the URL to be `/book/:bookId`. Oh, and
+if the user lands on a page that we don't have a route for, then we should show
+them a nice message and a link to take them back home.
 
-```javascript
-const endpoint = `${process.env.REACT_APP_API_URL}/books?query=Voice%20of%20War`
+And we want to have a nav bar on the left. There's really only one link we'll
+have in there right now, but we'll put more in there soon.
+
+Here are the URLs we should support:
+
+```
+/discover       ->     Discover books screen
+/book/:bookId   ->     Book screen
+*               ->     Helpful "not found" screen
 ```
 
-Making a request to this endpoint will return this data:
-
-```json
-{
-  "books": [
-    {
-      "title": "Voice of War",
-      "author": "Zack Argyle",
-      "coverImageUrl": "https://images-na.ssl-images-amazon.com/images/I/41JodZ5Vl%2BL.jpg",
-      "id": "B084F96GFZ",
-      "pageCount": 372,
-      "publisher": "Self Published",
-      "synopsis": "..."
-    }
-  ]
-}
-```
-
-We've also already designed the page. All that's left is to wire up our design
-with the backend. But we've never made a request to the backend yet so you'll
-need to create the API `client` function that we'll use for making all requests
-to our API (like searching books). Once that's ready, you can use it in your
-component.
+💰 tip: there's no need to render the router around the Unauthenticated App,
+just the Authenticated one.
 
 ### Files
 
-- `src/discover.js`
-- `src/utils/api-client.js`
+- `src/app.js`
+- `src/authenticated-app.js`
+- `src/components/book-row.js`
+- `src/screens/not-found.js`
+- `src/screens/book.js`
 
 ## Extra Credit
 
-### 1. 💯 handle failed requests
+### 1. 💯 handle URL redirects
 
-[Production deploy](https://exercises-03-data-fetching.bookshelf.lol/extra-1)
+[Production deploy](https://exercises-05-routing.bookshelf.lol/extra-1)
 
-Our backend developers try really hard to give you the data you need, but
-sometimes things just fail (💰 especially if you send the word "FAIL" as the
-query... go ahead, try it).
+We don't have anything to show at the home route `/`. We should redirect the
+user from that route to `/discover` automatically. Often, developers will use
+their client-side router to redirect users, but it's not possible for the
+browser and search engines to get the proper status codes for redirect (301
+or 302) so that's not optimal. The server should be configured to handle those.
 
-Add support for showing the user helpful information in the event of a failure.
-Our designer gave us this which you can use for the UI:
+There are three environments where we have a server serving our content:
 
-For the search icon:
+1. Locally during development
+2. Locally when running the built code via the `npm run serve` script which uses
+   https://npm.im/serve
+3. In production with Netlify
+
+So for this extra credit you need to configure each of these to redirect `/` to
+`/discover`.
+
+**Local Development**
+
+We need to add redirect functionality to the webpack server that `react-scripts`
+is running for us. We can do that with the `./src/setupProxy.js` file. In that
+file we export a function that accepts an
+[express `app`](https://expressjs.com/) and attaches a `get` to handle requests
+sent to a URL matching this regex: `/\/$/` and redirects to `/discover`.
 
 ```javascript
-// get FaTimes from react-icons
-<FaTimes aria-label="error" css={{color: colors.danger}} />
+function proxy(app) {
+  // add the redirect handler here
+}
+
+module.exports = proxy
 ```
 
+📜 Here are some docs that might be helpful to you:
+
+- http://expressjs.com/en/4x/api.html#app.get.method
+- http://expressjs.com/en/4x/api.html#res.redirect
+
+**With serve**
+
+The `serve` module can be configured with a `serve.json` file in the directory
+you serve. Open `./public/serve.json` and see if you can figure out how to get
+that to redirect properly.
+
+To know whether it worked, you'll need to run:
+
+```
+npm run build
+npm run serve
+```
+
+Then open `http://localhost:8811`. It worked if your redirected to
+`http://localhost:8811/discover`.
+
+📜 Here are the docs you'll probably want:
+
+- https://github.com/zeit/serve-handler/tree/ce35fcd4e1c67356348f4735eed88fb084af9b43#redirects-array
+
+**In production**
+
+There are a few ways to configure Netlify to do redirects. We'll use the
+`_redirects` file. Open `./public/_redirects` and add support for redirecting
+`/` to `/discover`.
+
+There's no easy way to test this works, so just compare your solution to the
+final file and take my word for it that it works. Or, if you really want to
+check it out, you can run `npm run build` and then drag and drop the `build`
+directory here: https://app.netlify.com/drop
+
+📜 Here's the docs for Netlify's `_redirects` file:
+
+- https://docs.netlify.com/routing/redirects
+
+> Hint: you need to use the "!" force feature for this.
+
+For more on why we prefer server-side redirects over client-side, read
+[Stop using client-side route redirects](https://kentcdodds.com/blog/stop-using-client-side-route-redirects).
+
+**Files:**
+
+- `src/setupProxy.js`
+- `public/serve.json`
+- `public/_redirects`
+
+### 2. 💯 add `useMatch` to highlight the active nav item
+
+[Production deploy](https://exercises-05-routing.bookshelf.lol/extra-2)
+
+This isn't quite as useful right now, but when we've got several other links in
+the nav, it will be helpful to orient users if we have some indication as to
+which link the user is currently viewing. Our designer has given us this CSS you
+can use:
+
 ```javascript
-// display this between the search input and the results
 {
-  isError ? (
-    <div css={{color: colors.danger}}>
-      <p>There was an error:</p>
-      <pre>{error.message}</pre>
-    </div>
-  ) : null
+  borderLeft: `5px solid ${colors.indigo}`,
+  background: colors.gray10,
+  ':hover': {
+    background: colors.gray20,
+  },
 }
 ```
 
-💰 I wasn't joking. For some reason every time you send the backend the word
-"FAIL" it results in a failure. Our backend devs are completely baffled, but it
-sure makes it easier for you to test the error state out!
-
-**Files:**
-
-- `src/utils/api-client.js`
-- `src/discover.js`
-
-### 2. 💯 use the useAsync hook
-
-[Production deploy](https://exercises-03-data-fetching.bookshelf.lol/extra-2)
-
-After you finished with everything, one of the other UI devs 🧝‍♀️ was reviewing
-your PR and asked why you didn't use the `useAsync` hook she wrote last week.
-You respond by palming your face 🤦‍♂️ and go back to the drawing board.
-
-`useAsync` is slightly different from what you've built. Here's an example:
+You can determine whether the URL matches a given path via the `useMatch` hook:
 
 ```javascript
-import {useAsync} from 'utils/hooks'
-
-const {data, error, run, isLoading, isError, isSuccess} = useAsync()
-
-// in an event handler/effect/wherever
-run(doSomethingThatReturnsAPromise())
+const matches = useMatch('/some-path')
 ```
 
-This seems to handle your use case well, so let's swap your custom solution with
-your co-worker's `useAsync` hook.
+From there, you can conditionally apply the styles.
+
+💰 Tip: the Link component in NavLink already has a CSS prop on it. The easiest
+way to add these additional styles is by passing an `array` to the css prop like
+so:
+
+```javascript
+<div
+  css={[
+    {
+      /* styles 1 */
+    },
+    {
+      /* styles 2 */
+    },
+  ]}
+/>
+```
 
 **Files:**
 
-- `src/discover.js`
+- `src/authenticated-app.js`
 
 ## 🦉 Elaboration and Feedback
 
 After the instruction, if you want to remember what you've just learned, then
 fill out the elaboration and feedback form:
-
-https://ws.kcd.im/?ws=Build%20React%20Apps&e=03%3A%20Make%20HTTP%20Requests&em=

@@ -8,6 +8,7 @@ import {createRoot} from 'react-dom/client'
 import {Button, Input, FormGroup, Spinner} from './components/lib'
 import {Modal, ModalContents, ModalOpenButton} from './components/modal'
 import {Logo} from './components/logo'
+import {useAsync} from './utils/hooks'
 
 function LoginForm({onSubmit, submitButton}) {
   function handleSubmit(event) {
@@ -47,15 +48,7 @@ function LoginForm({onSubmit, submitButton}) {
   )
 }
 
-function App() {
-  function login(formData) {
-    console.log('login', formData)
-  }
-
-  function register(formData) {
-    console.log('register', formData)
-  }
-
+function UnauthenticatedApp({login, register}) {
   return (
     <div
       css={{
@@ -104,6 +97,4 @@ function App() {
   )
 }
 
-const root = createRoot(document.getElementById('root'))
-root.render(<App />)
-export {root}
+export {UnauthenticatedApp}
