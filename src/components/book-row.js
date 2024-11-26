@@ -18,8 +18,8 @@ function BookRow({book}) {
       }}
     >
       <div
-      <div
         aria-labelledby={id}
+        to={`/book/${book.id}`}
         css={{
           minHeight: 270,
           flexGrow: 2,
